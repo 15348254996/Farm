@@ -53,6 +53,8 @@ namespace Farm.Inventory
             }
 
             slotImage.enabled = false;
+            slotImage.sprite = null;
+            itemAmount=0;
             amounttext.text = string.Empty;
             button.interactable = false;
         }
@@ -61,7 +63,13 @@ namespace Farm.Inventory
         {
             if (itemAmount == 0) return; 
             isSelected=!isSelected;
+            
             inventoryUI.UpdateSlotHighlight(slotIndex);
+
+            if (slotType == SlotType.Bag)
+            {
+                EventHandler.CallItemSelectedEvent(itemDetails,isSelected);
+            }
         }
 
         public void OnBeginDrag(PointerEventData eventData)
@@ -74,6 +82,7 @@ namespace Farm.Inventory
 
                 isSelected = true;
                 inventoryUI.UpdateSlotHighlight(slotIndex);
+                UpdateEmptySlot();
             }
         }
 
