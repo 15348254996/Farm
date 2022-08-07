@@ -24,7 +24,7 @@ namespace Farm.Inventory
         public ItemDetails itemDetails;
         public int itemAmount;
 
-        private InventoryUI inventoryUI => GetComponentInParent<InventoryUI>();
+        public InventoryUI inventoryUI => GetComponentInParent<InventoryUI>();
 
         private void Start()
         {
@@ -50,8 +50,9 @@ namespace Farm.Inventory
             if (isSelected)
             {
                 isSelected = false;
+                inventoryUI.UpdateSlotHighlight(-1);
+                EventHandler.CallItemSelectedEvent(itemDetails,isSelected);
             }
-
             slotImage.enabled = false;
             slotImage.sprite = null;
             itemAmount=0;

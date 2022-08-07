@@ -9,7 +9,6 @@ namespace Farm.Inventory
     {
         private void OnTriggerEnter2D(Collider2D other)
         {
-            Debug.Log(other.name);
             Item item = other.GetComponent<Item>();
             if (item!=null)
             {

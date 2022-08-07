@@ -12,6 +12,13 @@ public class Player : MonoBehaviour
     private Vector2 movementInput;
     private Animator[] animators;
     private bool IsWalk;
+    private bool inputDisable;
+    
+    
+    //工具动画所需参数
+    private float mouseX;
+    private float mouseY;
+    private bool useTool;
 
     private void Awake()
     {
@@ -19,15 +26,94 @@ public class Player : MonoBehaviour
         animators = GetComponentsInChildren<Animator>();
     }
 
+    private void OnEnable()
+    {
+        EventHandler.BeforeSceneUnloadEvent += OnBeforeSceneUnloadEvent;
+        EventHandler.AfterSceneLoadedEvent += OnAfterSceneLoadedEvent;
+        EventHandler.MoveToPosition += OnMoveToPosition;
+        EventHandler.MouseClickedEvent += OnMouseClickedEvent;
+    }
+
+    private void OnDisable()
+    {
+        EventHandler.BeforeSceneUnloadEvent -= OnBeforeSceneUnloadEvent;
+        EventHandler.AfterSceneLoadedEvent -= OnAfterSceneLoadedEvent;
+        EventHandler.MoveToPosition -= OnMoveToPosition;
+        EventHandler.MouseClickedEvent -= OnMouseClickedEvent;
+    }
+
+    private void OnMouseClickedEvent(Vector3 mousepos, ItemDetails itemDetails)
+    {
+        if (itemDetails.itemType!=ItemType.Commodity&&itemDetails.itemType!=ItemType.Furniture&&itemDetails.itemType!=ItemType.Seed)
+        {
+            mouseX = mousepos.x - transform.position.x;
+            mouseY = mousepos.y - (transform.position.y+0.85f);
+
+            if (Mathf.Abs(mouseX) > Mathf.Abs(mouseY))
+                mouseY = 0;
+            else
+                mouseX = 0;
+            StartCoroutine(UseToolRoutine(mousepos,itemDetails));
+        }
+        else
+        {
+            EventHandler.CallExecuteActionAfterAnimation(mousepos,itemDetails);
+        }
+        
+    }
+
+    private IEnumerator UseToolRoutine(Vector3 mousepos, ItemDetails itemDetails)
+    {
+        useTool = true;
+        inputDisable = true;
+        yield return null;
+        foreach (var anim in animators)
+        {
+            anim.SetTrigger("useTool");
+            anim.SetFloat("Inputx",mouseX);
+            anim.SetFloat("Inputy",mouseY);
+        }
+
+        yield return new WaitForSeconds(0.45f);
+        EventHandler.CallExecuteActionAfterAnimation(mousepos,itemDetails);
+        yield return new WaitForSeconds(0.25f);
+        useTool = false;
+        inputDisable = false;
+    }
+    private void OnMoveToPosition(Vector3 targetPosition)
+    {
+        transform.position = targetPosition;
+    }
+
+    private void OnAfterSceneLoadedEvent()
+    {
+        inputDisable = false;
+    }
+
+    private void OnBeforeSceneUnloadEvent()
+    {
+        inputDisable = true;
+    }
+    
     private void Update()
     {
-        PlayerInput();
+        if (inputDisable==false)
+        {
+            PlayerInput();
+        }
+        else
+        {
+            IsWalk = false;
+        }
         SwitchAnimation();
     }
 
     private void FixedUpdate()
     {
-        Movement();
+        if (inputDisable == false)
+        {
+            Movement();
+        }
     }
 
     private void PlayerInput()
@@ -58,6 +144,8 @@ public class Player : MonoBehaviour
         foreach (var anim in animators)
         {
             anim.SetBool("IsWalk",IsWalk);
+            anim.SetFloat("mouseX",mouseX);
+            anim.SetFloat("mouseY",mouseY);
             if (IsWalk)
             {
                 anim.SetFloat("Inputx",inputX);
